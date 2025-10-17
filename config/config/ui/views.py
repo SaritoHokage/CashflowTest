@@ -57,7 +57,6 @@ def entries_list(request):
     ).order_by('-created_at', '-id')
     qs = _apply_filters(request, qs)
 
-    # Итоги по фильтру (наименования типов могут отличаться, подставлены 'Пополнение' и 'Списание')
     INCOME_NAMES = ['Пополнение']
     EXPENSE_NAMES = ['Списание']
     totals = qs.aggregate(
@@ -69,12 +68,11 @@ def entries_list(request):
     expense = totals['expense'] or 0
     net = income - expense
 
-    # Пагинация
+    # пагинация
     page = request.GET.get('page', 1)
     paginator = Paginator(qs, 12)
     page_obj = paginator.get_page(page)
 
-    # Базовый querystring без page
     params = request.GET.copy()
     params.pop('page', None)
     base_qs = params.urlencode()

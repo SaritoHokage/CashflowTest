@@ -15,8 +15,8 @@ Swagger UI: /api/docs/
 Python 3.12+; SQLite по умолчанию (db.sqlite3 в корне)
 Зависимости: Django, DRF, django-filter, drf-spectacular, django-htmx (см. requirements.txt)
 Структура
-config/ — настройки проекта, корневые urls, wsgi/asgi
-ui/ — views/urls/templates для веб-интерфейса
-core/ — справочники (статусы, типы, категории)
-cashflow/ — операции и логика кассового потока
-api/ — serializers/views/urls для REST-API
+config/ - настройки проекта, корневые urls, wsgi/asgi
+ui/ - views/urls/templates для веб-интерфейса
+core/ - справочники (статусы, типы, категории)
+cashflow/ - операции и логика кассового потока
+api/ - serializers/views/urls для REST-API

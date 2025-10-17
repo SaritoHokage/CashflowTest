@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}Cashflow{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+  <link href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.2/dist/darkly/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
+  <style>
+  html, body { width: 100%; overflow-x: hidden; }
+  .dashboard-main { box-sizing: border-box; }
+  body { background: #1f2227; }
+  .sidebar {
+    position: fixed; inset: 0 auto 0 0;
+    width: 220px; background: #181b1f; color: #fff; padding: 20px 16px;
+    overflow-y: auto; border-right: 1px solid #2b2f36;
+  }
+  .dashboard-main { margin-left: 220px; padding: 24px; width: calc(100% - 220px); max-width: calc(100% - 220px); }
+
+  .nav .nav-link { color: #cfd3da; border-radius: 8px; }
+  .nav .nav-link.active, .nav .nav-link:hover { color: #fff; background: #23272b; }
+  .card-status-online { border-left: 4px solid #2ecc71; }
+  .card-status-offline { border-left: 4px solid #e74c3c; }
+  .card-status-warning { border-left: 4px solid #f1c40f; }
+  .card { background: #262a31; border: 1px solid #2f3540; border-radius: 10px; }
+  .card .badge { font-weight: 600; }
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 16px;
+    align-items: stretch;
+  }
+  @media (max-width: 420px) {
+    .cards-grid { grid-template-columns: 1fr; }
+  }
+
+  .card { display: flex; flex-direction: column; height: 100%; }
+  .card-body { flex: 1 1 auto; }
+</style>
+
+
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <nav class="sidebar">
+    <div class="d-flex align-items-center gap-2 mb-4">
+      <i class="bi bi-cash-stack fs-3"></i>
+      <span class="brand fs-4">Cashflow</span>
+    </div>
+    <ul class="nav flex-column gap-1">
+      <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name in 'entries_list entry_create entry_edit' %}active{% endif %}"
+           href="{% url 'entries_list' %}">
+          <i class="bi bi-table"></i> Операции
+        </a>
+      </li>
+    </ul>
+    <hr>
+    <div class="small">
+      <a href="/admin/" class="nav-link"><i class="bi bi-gear"></i> Админ панель</a>
+      <a href="#" class="nav-link"><i class="bi bi-person"></i> Профиль</a>
+    </div>
+  </nav>
+
+  <main class="dashboard-main container-fluid">
+    {% if messages %}
+  <div class="position-fixed top-0 start-50 translate-middle-x mt-3" style="z-index:1080; width:min(960px, 92vw);">
+    {% for m in messages %}
+      <div class="alert alert-{{ m.tags }} shadow mb-2" role="alert">{{ m }}</div>
+    {% endfor %}
+  </div>
+  <script>
+    setTimeout(()=>{document.querySelectorAll('.alert').forEach(el=>{
+      el.style.transition='opacity .4s ease'; el.style.opacity='0';
+      setTimeout(()=>el.remove(), 400);
+    })}, 3000);
+  </script>
+    {% endif %}
+
+
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

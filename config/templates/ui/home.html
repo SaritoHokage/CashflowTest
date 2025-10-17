@@ -1,0 +1,40 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Cashflow</title>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+<body>
+  <form>
+    <label>Тип</label>
+    <select id="type-select"
+            name="type"
+            hx-get="{% url 'hx_categories' %}"
+            hx-target="#category-select"
+            hx-trigger="change"
+            hx-include="#type-select">
+      <option value="">— выберите тип —</option>
+      {% for t in types %}
+        <option value="{{ t.id }}">{{ t.name }}</option>
+      {% endfor %}
+    </select>
+
+    <label>Категория</label>
+    <select id="category-select"
+            name="category"
+            hx-get="{% url 'hx_subcategories' %}"
+            hx-target="#subcategory-select"
+            hx-trigger="change"
+            hx-include="#category-select">
+      <option value="">— выберите категорию —</option>
+    </select>
+
+    <label>Подкатегория</label>
+    <select id="subcategory-select" name="subcategory">
+      <option value="">— выберите подкатегорию —</option>
+    </select>
+  </form>
+</body>
+</html>

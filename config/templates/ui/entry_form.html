@@ -1,0 +1,132 @@
+{% extends "ui/base.html" %}
+{% block title %}Запись{% endblock %}
+{% block head %}
+<style>
+  .form-wrap { max-width: 980px; }
+  .form-grid {
+    display: grid; gap: 16px;
+    grid-template-columns: 1fr 1fr;
+  }
+  @media (max-width: 992px) { .form-grid { grid-template-columns: 1fr; } }
+  .card { background: #262a31; border: 1px solid #2f3540; border-radius: 10px; }
+  .card-body { padding: 16px; }
+  .actions { display: flex; gap: 12px; justify-content: flex-end; }
+</style>
+{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    {% if entry %}
+      <h3 class="m-0"><i class="bi bi-pencil-square"></i> Редактирование записи</h3>
+      <div class="text-muted small mt-1">
+        {{ entry.created_at }} • <strong>{{ entry.amount|floatformat:2 }} ₽</strong> •
+        {{ entry.category.name }} — {{ entry.subcategory.name }}
+        <span class="badge bg-success ms-2">{{ entry.status.name }}</span>
+        <span class="badge bg-primary ms-1">{{ entry.type.name }}</span>
+      </div>
+    {% else %}
+      <h3 class="m-0"><i class="bi bi-plus-lg"></i> Новая запись</h3>
+    {% endif %}
+  </div>
+  <a href="{% url 'entries_list' %}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> К списку
+  </a>
+</div>
+
+
+{% if messages %}
+  {% for m in messages %}
+    <div class="alert alert-{{ m.tags }} mt-2 mb-2">{{ m }}</div>
+  {% endfor %}
+{% endif %}
+
+<div class="form-wrap">
+  <div class="card">
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="form-grid">
+          <div>
+            <label class="form-label">Дата</label>
+            <input type="date" class="form-control" name="created_at"
+                   value="{{ entry.created_at|date:'Y-m-d' }}">
+          </div>
+
+          <div>
+            <label class="form-label">Статус</label>
+            <select class="form-select" name="status" required>
+              <option value="">—</option>
+              {% for s in statuses %}
+                <option value="{{ s.id }}" {% if entry and entry.status_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label class="form-label">Тип</label>
+            <select id="type-select" class="form-select" name="type" required
+                    hx-get="{% url 'hx_categories' %}"
+                    hx-target="#category-select"
+                    hx-trigger="change"
+                    hx-include="#type-select">
+              <option value="">—</option>
+              {% for t in types %}
+                <option value="{{ t.id }}" {% if entry and entry.type_id == t.id %}selected{% endif %}>{{ t.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label class="form-label">Категория</label>
+            <select id="category-select" class="form-select" name="category" required
+        hx-get="{% url 'hx_subcategories' %}"
+        hx-target="#subcategory-select"
+        hx-trigger="change"
+        hx-include="#category-select">
+    <option value="">—</option>
+    {% if entry %}
+        {% for c in entry.type.categories.all %}
+        <option value="{{ c.id }}" {% if entry.category_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+    {% endif %}
+    </select>
+
+          </div>
+
+          <div>
+            <label class="form-label">Подкатегория</label>
+            <select id="subcategory-select" class="form-select" name="subcategory" required>
+    <option value="">—</option>
+    {% if entry %}
+        {% for s in entry.category.subcategories.all %}
+        <option value="{{ s.id }}" {% if entry.subcategory_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+        {% endfor %}
+    {% endif %}
+    </select>
+
+          </div>
+
+          <div>
+            <label class="form-label">Сумма</label>
+            <input type="number" class="form-control" step="0.01" min="0" name="amount"
+                   value="{{ entry.amount }}">
+          </div>
+
+          <div class="grid-col-span-2">
+            <label class="form-label">Комментарий</label>
+            <textarea class="form-control" name="comment" rows="3">{{ entry.comment }}</textarea>
+          </div>
+        </div>
+
+        <div class="actions mt-3">
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Сохранить</button>
+          <a href="{% url 'entries_list' %}" class="btn btn-outline-secondary">Отмена</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,219 @@
+{% extends "ui/base.html" %}
+{% block title %}Операции{% endblock %}
+
+{% block head %}
+<style>
+  /* 
+    сетка карточек 
+  */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    align-items: stretch;
+  }
+  @media (max-width: 420px) {
+    .cards-grid { grid-template-columns: 1fr; }
+  }
+
+  .card { display: flex; flex-direction: column; height: 100%;
+          background: #262a31; border: 1px solid #2f3540; border-radius: 10px; }
+  .card-body { flex: 1 1 auto; padding: 16px; }
+  .card-footer { padding: 8px 16px 14px; }
+
+  .filters-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+  .filters-bar .form-control, .filters-bar .form-select { min-width: 160px; }
+  @media (max-width: 1200px){ .filters-bar .form-control, .filters-bar .form-select { min-width: 140px; } }
+  @media (max-width: 992px){ .filters-bar .form-control, .filters-bar .form-select { min-width: 120px; } }
+
+  .amount { white-space: nowrap; }
+
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="m-0"><i class="bi bi-table"></i> Операции</h3>
+  <div class="d-flex gap-2">
+    <a href="{% url 'entries_export_csv' %}?{{ request.GET.urlencode }}" class="btn btn-outline-success">
+      <i class="bi bi-download"></i> Экспорт CSV
+    </a>
+    <a href="{% url 'entry_create' %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg"></i> Добавить запись
+    </a>
+  </div>
+</div>
+{% if summary %}
+<div class="row g-2 mb-3">
+  <div class="col-12 col-md-3">
+    <div class="card">
+      <div class="card-body py-2">
+        <div class="text-muted small">Приход</div>
+        <div class="fs-5 fw-bold text-success">{{ summary.income|floatformat:2 }} ₽</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-3">
+    <div class="card">
+      <div class="card-body py-2">
+        <div class="text-muted small">Расход</div>
+        <div class="fs-5 fw-bold text-danger">{{ summary.expense|floatformat:2 }} ₽</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-3">
+    <div class="card">
+      <div class="card-body py-2">
+        <div class="text-muted small">Итог</div>
+        <div class="fs-5 fw-bold">{{ summary.net|floatformat:2 }} ₽</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-3">
+    <div class="card">
+      <div class="card-body py-2">
+        <div class="text-muted small">Операций</div>
+        <div class="fs-5 fw-bold">{{ summary.cnt }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<form method="get" class="filters-bar mb-3">
+  <div>
+    <label class="form-label mb-1">Статус</label>
+    <select class="form-select form-select-sm" name="status">
+      <option value="">—</option>
+      {% for s in statuses %}
+        <option value="{{ s.id }}" {% if filters.status == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div>
+    <label class="form-label mb-1">Тип</label>
+    <select id="type-select" class="form-select form-select-sm" name="type"
+            hx-get="{% url 'hx_categories' %}" hx-target="#category-select"
+            hx-trigger="change" hx-include="#type-select">
+      <option value="">—</option>
+      {% for t in types %}
+        <option value="{{ t.id }}" {% if filters.type == t.id|stringformat:"s" %}selected{% endif %}>{{ t.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div>
+    <label class="form-label mb-1">Категория</label>
+    <select id="category-select" class="form-select form-select-sm" name="category"
+            hx-get="{% url 'hx_subcategories' %}" hx-target="#subcategory-select"
+            hx-trigger="change" hx-include="#category-select">
+      <option value="">—</option>
+    </select>
+  </div>
+
+  <div>
+    <label class="form-label mb-1">Подкатегория</label>
+    <select id="subcategory-select" class="form-select form-select-sm" name="subcategory">
+      <option value="">—</option>
+    </select>
+  </div>
+
+  <div>
+    <label class="form-label mb-1">Дата с</label>
+    <input type="date" class="form-control form-control-sm" name="date_from" value="{{ filters.date_from|default:'' }}">
+  </div>
+
+  <div>
+    <label class="form-label mb-1">Дата по</label>
+    <input type="date" class="form-control form-control-sm" name="date_to" value="{{ filters.date_to|default:'' }}">
+  </div>
+
+  <div class="d-flex align-items-end ms-1">
+    <button class="btn btn-outline-light btn-sm me-2" type="submit"><i class="bi bi-funnel"></i> Фильтровать</button>
+    <a class="btn btn-outline-secondary btn-sm" href="{% url 'entries_list' %}"><i class="bi bi-x-circle"></i> Сбросить</a>
+  </div>
+</form>
+
+<div class="cards-grid">
+  {% for e in entries %}
+  <div>
+    <div class="card h-100
+      {% if e.status.name|lower == 'бизнес' %}card-status-online
+      {% elif e.status.name|lower == 'личное' %}card-status-warning
+      {% else %}card-status-offline{% endif %}">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="text-muted small">{{ e.created_at }}</div>
+            <h5 class="card-title mt-1 mb-2">{{ e.category.name }} — {{ e.subcategory.name }}</h5>
+          </div>
+          <div class="fs-5 fw-bold amount">{{ e.amount|floatformat:2 }} ₽</div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+          <span class="badge bg-success">{{ e.status.name }}</span>
+          <span class="badge bg-primary">{{ e.type.name }}</span>
+          <span class="badge bg-secondary">{{ e.category.name }}</span>
+          <span class="badge bg-dark">{{ e.subcategory.name }}</span>
+        </div>
+
+        {% if e.comment %}
+          <p class="mt-3 mb-0 text-muted small">{{ e.comment }}</p>
+        {% endif %}
+      </div>
+      <div class="card-footer bg-transparent border-0 pt-0 pb-3">
+        <div class="d-flex justify-content-end gap-1">
+          <a href="{% url 'entry_edit' e.id %}" class="btn btn-sm btn-outline-info" title="Редактировать">
+            <i class="bi bi-pencil"></i>
+          </a>
+          <form action="{% url 'entry_duplicate' e.id %}" method="post" onsubmit="return confirm('Дублировать запись?');">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-secondary" title="Дублировать"><i class="bi bi-files"></i></button>
+          </form>
+          <form action="{% url 'entry_delete' e.id %}" method="post" onsubmit="return confirm('Удалить запись?');">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-danger" title="Удалить"><i class="bi bi-trash"></i></button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="alert alert-secondary">Нет данных</div>
+  {% endfor %}
+</div>
+
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+  <nav class="mt-3">
+    <ul class="pagination">
+      {% with params=request.GET.urlencode %}
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?{% if base_qs %}{{ base_qs }}&{% endif %}page={{ page_obj.previous_page_number }}">Назад</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Назад</span></li>
+        {% endif %}
+
+        <li class="page-item disabled">
+          <span class="page-link">Стр. {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+        </li>
+
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?{% if base_qs %}{{ base_qs }}&{% endif %}page={{ page_obj.next_page_number }}">Вперёд</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Вперёд</span></li>
+        {% endif %}
+      {% endwith %}
+    </ul>
+  </nav>
+    {% endif %}
+    </ul>
+  </nav>
+
+
+{% endblock %}

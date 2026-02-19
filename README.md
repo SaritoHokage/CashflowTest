@@ -1,22 +1,76 @@
 # CashflowTest
 
-Быстрый старт
-Установить зависимости:
-"python -m venv venv; venv\Scripts\activate; pip install -r requirements.txt"
-Применить миграции и запустить:
-"python manage.py migrate; python manage.py runserver"
-Полезные ссылки:
-UI: / или /entries/
-Админка: /admin/
-API ping: /api/ping/
-OpenAPI schema: /api/schema/
-Swagger UI: /api/docs/
-Требования
-Python 3.12+; SQLite по умолчанию (db.sqlite3 в корне)
-Зависимости: Django, DRF, django-filter, drf-spectacular, django-htmx (см. requirements.txt)
-Структура
-config/ - настройки проекта, корневые urls, wsgi/asgi
-ui/ - views/urls/templates для веб-интерфейса
-core/ - справочники (статусы, типы, категории)
-cashflow/ - операции и логика кассового потока
-api/ - serializers/views/urls для REST-API
+Учебный сервис для учёта доходов и расходов.  
+Проект сделан как тренировка backend‑разработки: REST API, работа с базой данных и бизнес‑логикой денежных потоков.
+
+## Стек
+
+- Python 3.10+
+- FastAPI (или Flask — подставь то, что реально используется)
+- SQLite или PostgreSQL (укажи фактическую БД)
+- SQLAlchemy (если используешь ORM)
+- Pydantic
+- pytest
+
+## Функциональность
+
+- Хранение финансовых операций:
+  - доходы;
+  - расходы.
+- CRUD‑операции по операциям:
+  - добавление;
+  - получение списка;
+  - просмотр по идентификатору;
+  - обновление;
+  - удаление.
+- (Опционально) Категории операций: например, «зарплата», «еда», «транспорт».
+- Расчёт текущего баланса и базовой статистики (если реализовано).
+- Валидация входных данных через Pydantic.
+
+## Примеры эндпоинтов
+
+POST /operations/ — создать операцию (доход или расход).
+
+GET /operations/ — получить список операций.
+
+GET /operations/{id} — получить операцию по id.
+
+PUT /operations/{id} — обновить операцию.
+
+DELETE /operations/{id} — удалить операцию.
+
+При наличии отчётов:
+
+GET /report/summary — сводный баланс за период.
+
+Установка и запуск
+bash
+git clone https://github.com/SaritoHokage/CashflowTest.git
+cd CashflowTest
+
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+pip install -r requirements.txt
+
+# При необходимости — инициализация базы данных
+  -python init_db.py  # если есть отдельный скрипт
+  -uvicorn app.main:app --reload
+№После запуска приложение будет доступно по адресу:
+
+http://localhost:8000/docs — Swagger UI.
+
+http://localhost:8000/redoc — документация (если подключена).
+
+Тесты
+```bash
+pytest
+```
+План развития
+Добавить авторизацию пользователей и разделение данных по аккаунтам.
+
+Расширить отчёты (статистика по категориям/периодам).
+
+Добавить экспорт/импорт данных (CSV/Excel).
+
+Дописать интеграционные тесты.
